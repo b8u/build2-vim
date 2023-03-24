@@ -6,4 +6,5 @@
 "
 au BufNewFile,BufRead repositories.manifest   set ft=build2-manifest
 au BufNewFile,BufRead manifest                set ft=build2-manifest
+au BufNewFile,BufRead packages.manifest       set ft=build2-manifest
 

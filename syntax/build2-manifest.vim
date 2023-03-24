@@ -1,57 +1,58 @@
 " Vim syntax file
 " Language: Build2 manifest
 " Maintainer: b8u
-" Latest Revision: 21 March 2023
+" Latest Revision: 24 March 2023
 "
 " File type specification:
 " https://build2.org/bpkg/doc/build2-package-manager-manual.xhtml#manifest-format
 
-if exists("b:current_syntax")
-	finish
-endif
+" if exists("b:current_syntax")
+" 	finish
+" endif
 
 
 let s:name_value = "[^:\s\r\n]"
 
-" Version number needs a huge regex (and it's currently wrong).
-" Examples:
-"   0+1
-"   +0-20180112
-"   1.2.3
-"   1.2.3-a1
-"   1.2.3-b2
-"   1.2.3-rc1
-"   1.2.3-alpha1
-"   1.2.3-alpha.1
-"   1.2.3-beta.1
-"   1.2.3+1
-"   +2-1.2.3
-"   +2-1.2.3-alpha.1+3
-"   +2.2.3#1
-"   1.2.3+1#1
-"   +2-1.2.3+1#2
-
+" Version number needs a huge regex. It doesn't currently follow the
+" documentation, but translated from a sublime-text plugin.
+" More info: https://build2.org/bpkg/doc/build2-package-manager-manual.xhtml#package-version
 " Like: 1.2.3
 let s:version_digits = "\\d\\+\\.\\d\\+\\.\\d\\+"
 " Like: alpha1
 let s:version_digits_suffix_item = "[\\d\\a-]\\+"
+" -<prerel>
 let s:version_digits_optional_sufix_minus = "\\%(-\\%(".s:version_digits_suffix_item."\\)\\+\\%(\\.".s:version_digits_suffix_item."\\)*\\)\\?"
+" +<revision>
 let s:version_digits_optional_sufix_plus  = "\\%(+\\%(".s:version_digits_suffix_item."\\)\\+\\%(\\.".s:version_digits_suffix_item."\\)*\\)\\?"
+
 let s:version_value = "\\%(" . s:version_digits . s:version_digits_optional_sufix_minus . "\\)" . s:version_digits_optional_sufix_plus
-
-" Allowed names (before ':')
-syn match build2ManifestKeyword "^\s*\%(name\|version\|project\|priority\|summary\|license\|topics\|keywords\|description\|description-file\|description-type\|changes\|changes-file\|url\|doc-url\|src-url\|package-url\|email\|package-email\|build-email\|build-warning-email\|build-error-email\|depends\|requires\|tests\|examples\|benchmarks\|builds\|build-include\|build-exclude\|build-file\)\s*:"
-
-
-" TODO: after \ it's not a comment
-syn match build2ManifestComment "^\s*#.*$"
-syn match build2ManifestFormatVersion "^\s*:\s*\d*\s*$"
-
-echom s:version_value
-
 execute 'syn match build2ManifestVersion '.string(s:version_value)
 
-hi def link build2ManifestComment       Comment
-hi def link build2ManifestFormatVersion	PreProc
+
+syntax match build2ManifestName /^\s*[A-Za-z0-9-]\+\s*/ nextgroup=build2ManifestLine
+
+syntax match build2ManifestLineEnd excludenl /end$/ contained
+syntax match build2ManifestLineContinue "\\$" contained
+syntax region build2ManifestLine start=/:/ end=/$/ contains=build2ManifestLineContinue,build2ManifestLineEnd,build2ManifestFormatVersion,build2ManifestLineComment,build2ManifestVersion  keepend
+ 
+" " A line from '\' to the next '\' or the EOF
+syntax region build2ManifestMultiline start=/^\\$/ end=/^[\\$\%$]/ contains=build2ManifestLineComment keepend
+
+" A sandalone comment.
+syn match build2ManifestComment "^\s*#.*$"
+" A comment in a value line:
+" Example: name: value ; comment
+syn match build2ManifestLineComment /;.*$/ contained
+syn match build2ManifestFormatVersion "^\s*:\s*\d*\s*$"
+
+
+hi def link build2ManifestComment      Comment
+hi def link build2ManifestLineComment  Comment
+
+hi def link build2ManifestFormatVersion PreProc
 hi def link build2ManifestVersion       Identifier
-hi def link build2ManifestKeyword       Keyword
+" hi def link build2ManifestKeyword       Keyword
+
+hi def link build2ManifestName Keyword
+" hi def link build2ManifestLine PreProc
+" hi def link build2ManifestMultiline  Identifier
